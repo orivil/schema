@@ -1,4 +1,6 @@
-# Golang JSON Object Descriptor
+# Golang Package For Describing JSON Object
+
+* Note: This package is **NOT** implement the [json-schema](https://json-schema.org/)!
 
 ## Example
 ```go
