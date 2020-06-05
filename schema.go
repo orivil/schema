@@ -187,11 +187,7 @@ func (s *Schema) WithTagOptions(st reflect.StructTag) error {
 			}
 			if str := opts.GetValue(Enum); str != "" {
 				elements := strings.Split(str, ",")
-				var enum = make([]interface{}, len(elements))
-				for i, elem := range elements {
-					enum[i] = strings.TrimSpace(elem)
-				}
-				err = s.withEnum(enum)
+				err = s.withEnum(elements)
 				if err != nil {
 					return &TagError{
 						Tag: Tag + "." + Enum,
@@ -374,20 +370,12 @@ func (s *Schema) WithMinItems(minItems int) *Schema {
 	s.Validations.MinItems = &minItems
 	return s
 }
-func (s *Schema) withEnum(enum []interface{}) error {
+func (s *Schema) withEnum(enum []string) error {
 	s.initValidation()
-	var elements []interface{}
-	for _, e := range enum {
-		elem, err := types.ToValue(reflect.String, e)
-		if err != nil {
-			return err
-		}
-		elements = append(elements, elem)
-	}
-	s.Validations.Enum = elements
+	s.Validations.Enum = enum
 	return nil
 }
-func (s *Schema) WithEnum(enum ...interface{}) *Schema {
+func (s *Schema) WithEnum(enum ...string) *Schema {
 	err := s.withEnum(enum)
 	if err != nil {
 		panic(err)

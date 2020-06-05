@@ -10,17 +10,17 @@ import (
 )
 
 type Validations struct {
-	Required  bool          `json:"required,omitempty"`
-	Pattern   string        `json:"pattern,omitempty"`
-	MaxItems  *int          `json:"maxItems,omitempty"`
-	MinItems  *int          `json:"minItems,omitempty"`
-	MaxLen    *int          `json:"maxLen,omitempty"`
-	MinLen    *int          `json:"minLen,omitempty"`
-	MaxNum    *float64      `json:"maxNum,omitempty"`
-	MinNum    *float64      `json:"minNum,omitempty"`
-	MaxExcNum *float64      `json:"maxExcNum,omitempty"`
-	MinExcNum *float64      `json:"minExcNum,omitempty"`
-	Enum      []interface{} `json:"enum,omitempty"`
+	Required  bool     `json:"required,omitempty"`
+	Pattern   string   `json:"pattern,omitempty"`
+	MaxItems  *int     `json:"maxItems,omitempty"`
+	MinItems  *int     `json:"minItems,omitempty"`
+	MaxLen    *int     `json:"maxLen,omitempty"`
+	MinLen    *int     `json:"minLen,omitempty"`
+	MaxNum    *float64 `json:"maxNum,omitempty"`
+	MinNum    *float64 `json:"minNum,omitempty"`
+	MaxExcNum *float64 `json:"maxExcNum,omitempty"`
+	MinExcNum *float64 `json:"minExcNum,omitempty"`
+	Enum      []string `json:"enum,omitempty"`
 }
 
 func (vs *Validations) validItemsLength(length int) *Validations {
@@ -34,17 +34,12 @@ func (vs *Validations) validNumber(num float64) (info *Validations, err error) {
 	if vs.Enum != nil {
 		exist := false
 		var f64 float64
-		var slice *types.Slice
-		slice, err = types.NewSlice(vs.Enum)
-		if err != nil {
-			return nil, err
-		}
-		var f64s []float64
-		f64s, err = slice.Float64()
-		if err != nil {
-			return nil, err
-		}
-		for _, f64 = range f64s {
+		for _, enum := range vs.Enum {
+			str := types.String(enum)
+			f64, err = str.Float64()
+			if err != nil {
+				return nil, err
+			}
 			if f64 == num {
 				exist = true
 				break
@@ -81,7 +76,7 @@ func (vs *Validations) validString(str string) (info *Validations, err error) {
 	if vs.Enum != nil {
 		exist := false
 		for _, e := range vs.Enum {
-			if s, ok := e.(string); ok && s == str {
+			if e == str {
 				exist = true
 				break
 			}
