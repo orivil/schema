@@ -25,7 +25,7 @@ type A struct {
 }
 
 type B struct {
-	F1  *int32  `json:"f11"` // covered
+	F1  *int32  `json:"f01"` // covered by A
 	F11 *string `json:"f11" schema:"required"`
 	F12 *C      `json:"f12"`
 }
@@ -166,7 +166,7 @@ func TestNewSchemas(t *testing.T) {
 					"type": "Object",
 					"properties": [
 						{
-							"name": "f11",
+							"name": "f01",
 							"type": "Number"
 						},
 						{
