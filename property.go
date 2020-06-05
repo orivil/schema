@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-type Properties map[string]*Schema
+type Properties []*Schema
 
 func getFieldName(tag reflect.StructTag) string {
 	v := tag.Get("json")

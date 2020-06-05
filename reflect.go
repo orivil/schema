@@ -75,12 +75,12 @@ func valueToSchema(v reflect.Value, root *reflect.Type, existStructs map[reflect
 				return nil, err
 			}
 			if fs != nil {
-				fs.Field = field.ft.Name
+				fs.Name = field.property
 				err = fs.WithTagOptions(field.ft.Tag)
 				if err != nil {
 					return nil, err
 				}
-				schema.Properties[field.property] = fs
+				schema.Properties = append(schema.Properties, fs)
 			}
 		}
 	case reflect.Map:
@@ -99,9 +99,8 @@ func valueToSchema(v reflect.Value, root *reflect.Type, existStructs map[reflect
 					if err != nil {
 						return nil, err
 					} else {
-						property := pv.String()
-						ms.Field = property
-						schema.Properties[property] = ms
+						ms.Name = pv.String()
+						schema.Properties = append(schema.Properties, ms)
 					}
 				}
 			}

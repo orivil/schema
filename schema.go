@@ -14,11 +14,11 @@ import (
 )
 
 type Schema struct {
+	Name        string       `json:"name,omitempty"`
 	Model       string       `json:"model,omitempty"`
 	Namespace   string       `json:"namespace,omitempty"`
 	Ref         string       `json:"$ref,omitempty"`
 	Type        JsonKind     `json:"type,omitempty"`
-	Field       string       `json:"-"`
 	Description string       `json:"description,omitempty"`
 	Items       *Schema      `json:"items,omitempty"`
 	Properties  Properties   `json:"properties,omitempty"`
@@ -116,9 +116,13 @@ func (s *Schema) valid(v reflect.Value) (info *Validations, err error) {
 		v = indirectValue(v, true)
 		vk := v.Kind()
 		if vk == reflect.Struct {
-			var structFields = getStructFieldsValue(v)
+			fs := getStructFields(v)
+			fvs := make(map[string]reflect.Value, len(fs))
+			for _, f := range fs {
+				fvs[f.property] = f.fv
+			}
 			for _, schema := range s.Properties {
-				fv := structFields[schema.Field]
+				fv := fvs[schema.Name]
 				info, err = schema.valid(fv)
 				if info != nil || err != nil {
 					return info, err
@@ -137,32 +141,6 @@ func (s *Schema) valid(v reflect.Value) (info *Validations, err error) {
 	return nil, nil
 }
 
-func getStructFieldsValue(v reflect.Value) map[string]reflect.Value {
-	v = indirectValue(v, true)
-	numFields := v.NumField()
-	t := v.Type()
-	fields := map[string]reflect.Value{}
-	subs := map[string]reflect.Value{}
-	for i := 0; i < numFields; i++ {
-		fv := v.Field(i)
-		ft := t.Field(i)
-		if ft.Anonymous {
-			anonymous := getStructFieldsValue(fv)
-			for s, value := range anonymous {
-				subs[s] = value
-			}
-		} else {
-			fields[ft.Name] = fv
-		}
-	}
-	for s, value := range subs {
-		if _, ok := fields[s]; !ok {
-			fields[s] = value
-		}
-	}
-	return fields
-}
-
 func (s *Schema) initValidation() {
 	if s.Validations == nil {
 		s.Validations = &Validations{}
@@ -171,13 +149,23 @@ func (s *Schema) initValidation() {
 
 func (s *Schema) Requires(properties []string) *Schema {
 	for _, property := range properties {
-		s.Properties[property].WithRequired(true)
+		for _, schema := range s.Properties {
+			if schema.Name == property {
+				schema.WithRequired(true)
+				break
+			}
+		}
 	}
 	return s
 }
 
 func (s *Schema) Property(property string) *Schema {
-	return s.Properties[property]
+	for _, schema := range s.Properties {
+		if schema.Name == property {
+			return schema
+		}
+	}
+	return nil
 }
 
 func (s *Schema) WithTagOptions(st reflect.StructTag) error {

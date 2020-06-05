@@ -49,8 +49,9 @@ func TestNewSchemas(t *testing.T) {
 	"model": "A",
 	"namespace": "github.com/orivil/schema_test",
 	"type": "Object",
-	"properties": {
-		"f01": {
+	"properties": [
+		{
+			"name": "f01",
 			"type": "String",
 			"description": "user name",
 			"validations": {
@@ -58,17 +59,20 @@ func TestNewSchemas(t *testing.T) {
 				"pattern": "^J"
 			}
 		},
-		"f02": {
+		{
+			"name": "f02",
 			"type": "String",
 			"validations": {
 				"maxLen": 12,
 				"minLen": 10
 			}
 		},
-		"f03": {
+		{
+			"name": "f03",
 			"type": "Number"
 		},
-		"f04": {
+		{
+			"name": "f04",
 			"type": "Number",
 			"validations": {
 				"enum": [
@@ -78,33 +82,39 @@ func TestNewSchemas(t *testing.T) {
 				]
 			}
 		},
-		"f05": {
+		{
+			"name": "f05",
 			"type": "Number",
 			"validations": {
 				"minNum": 16,
 				"maxExcNum": 18
 			}
 		},
-		"f06": {
+		{
+			"name": "f06",
 			"type": "Number",
 			"validations": {
 				"maxNum": 18,
 				"minExcNum": 16
 			}
 		},
-		"f07": {
+		{
+			"name": "f07",
 			"type": "Number"
 		},
-		"f08": {
+		{
+			"name": "f08",
 			"type": "Boolean"
 		},
-		"f09": {
+		{
+			"name": "f09",
 			"type": "Array",
 			"items": {
 				"type": "Number"
 			}
 		},
-		"f10": {
+		{
+			"name": "f10",
 			"type": "Array",
 			"items": {
 				"type": "String"
@@ -114,54 +124,67 @@ func TestNewSchemas(t *testing.T) {
 				"minLen": 10
 			}
 		},
-		"f11": {
+		{
+			"name": "f11",
 			"type": "String",
 			"validations": {
 				"required": true
 			}
 		},
-		"f12": {
+		{
+			"name": "f12",
 			"model": "C",
 			"namespace": "github.com/orivil/schema_test",
 			"type": "Object",
-			"properties": {
-				"f13": {
+			"properties": [
+				{
+					"name": "f13",
 					"type": "Boolean",
 					"validations": {
 						"required": true
 					}
 				},
-				"f14": {
+				{
+					"name": "f14",
 					"type": "File"
 				},
-				"f15": {
+				{
+					"name": "f15",
 					"type": "Array",
 					"items": {
 						"type": "File"
 					}
 				},
-				"f16": {
+				{
+					"name": "f16",
 					"$ref": "github.com/orivil/schema_test.A"
 				},
-				"f17": {
+				{
+					"name": "f17",
 					"model": "B",
 					"namespace": "github.com/orivil/schema_test",
 					"type": "Object",
-					"properties": {
-						"f11": {
+					"properties": [
+						{
+							"name": "f11",
+							"type": "Number"
+						},
+						{
+							"name": "f11",
 							"type": "String",
 							"validations": {
 								"required": true
 							}
 						},
-						"f12": {
+						{
+							"name": "f12",
 							"$ref": "github.com/orivil/schema_test.C"
 						}
-					}
+					]
 				}
-			}
+			]
 		}
-	}
+	]
 }`
 	if got != need {
 		t.Fatalf("need: %s, got: %s", need, got)
