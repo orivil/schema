@@ -5,6 +5,7 @@
 package schema
 
 import (
+	"fmt"
 	"github.com/orivil/types"
 	"net/url"
 	"reflect"
@@ -17,14 +18,15 @@ type UrlUnmarshaler interface {
 var urlUnmarshalerType = reflect.TypeOf(new(UrlUnmarshaler)).Elem()
 
 func UnmarshalUrl(values url.Values, v interface{}) error {
-	return unmarshalUrl(values, reflect.ValueOf(v))
+	rv := reflect.ValueOf(v)
+	return unmarshalUrl(values, &rv)
 }
 
-func unmarshalUrl(values url.Values, rv reflect.Value) error {
+func unmarshalUrl(values url.Values, rv *reflect.Value) error {
 	if rv.Type().Implements(urlUnmarshalerType) {
 		return rv.Interface().(UrlUnmarshaler).UnmarshalUrl(values)
 	}
-	irv := reflect.Indirect(rv)
+	irv := reflect.Indirect(*rv)
 	ik := irv.Kind()
 	if ik == reflect.Struct {
 		numFields := irv.NumField()
@@ -44,7 +46,7 @@ func unmarshalUrl(values url.Values, rv reflect.Value) error {
 							} else {
 								setV = fv.Elem()
 							}
-							err := unmarshalUrl(values, setV)
+							err := unmarshalUrl(values, &setV)
 							if err != nil {
 								return err
 							}
@@ -55,7 +57,7 @@ func unmarshalUrl(values url.Values, rv reflect.Value) error {
 							property = ft.Name
 						}
 						if vs := values[property]; len(vs) > 0 {
-							err := setUrlValue(vs, fv)
+							err := setUrlValue(vs, &fv)
 							if err != nil {
 								return err
 							}
@@ -64,11 +66,14 @@ func unmarshalUrl(values url.Values, rv reflect.Value) error {
 				}
 			}
 		}
+	} else {
+		return fmt.Errorf("only support struct or pointer of struct, got %s", ik)
 	}
 	return nil
 }
 
-func setUrlValue(values []string, v reflect.Value) error {
+func setUrlValue(values []string, vp *reflect.Value) error {
+	var v = *vp
 	if v.Kind() == reflect.Ptr {
 		if v.IsNil() {
 			nv := reflect.New(v.Type().Elem())
@@ -90,6 +95,12 @@ func setUrlValue(values []string, v reflect.Value) error {
 			return err
 		}
 		v.Set(reflect.ValueOf(i))
+	} else if ik == reflect.Struct {
+		urlValues, err := url.ParseQuery(values[0])
+		if err != nil {
+			return err
+		}
+		return unmarshalUrl(urlValues, vp)
 	} else {
 		i, err := types.ToValue(ik, values[0])
 		if err != nil {

@@ -10,18 +10,20 @@ import (
 	"testing"
 )
 
+type Anonymous struct {
+	Bool   *bool   `json:"bool"`
+	Params *Params `json:"params"`
+}
+type Params struct {
+	Str      string   `json:"str"`
+	Int      *int     `json:"int"`
+	Int8     int8     `json:"int_8"`
+	SliceInt []int    `json:"slice_int"`
+	SliceStr []string `json:"slice_str"`
+	*Anonymous
+}
+
 func TestUnmarshalUrlValues(t *testing.T) {
-	type Anonymous struct {
-		Bool *bool `json:"bool"`
-	}
-	type Params struct {
-		Str        string   `json:"str"`
-		Int        *int     `json:"int"`
-		Int8       int8     `json:"int_8"`
-		SliceInt   []int    `json:"slice_int"`
-		SliceStr   []string `json:"slice_str"`
-		*Anonymous `json:"-"`
-	}
 	values := url.Values{
 		"str":       []string{"Nina"},
 		"int":       []string{"64"},

@@ -14,9 +14,10 @@ import (
 )
 
 type Schema struct {
+	Model       string       `json:"model,omitempty"`
+	Namespace   string       `json:"namespace,omitempty"`
 	Ref         string       `json:"$ref,omitempty"`
 	Type        JsonKind     `json:"type,omitempty"`
-	GoType      reflect.Type `json:"-"`
 	Field       string       `json:"-"`
 	Description string       `json:"description,omitempty"`
 	Items       *Schema      `json:"items,omitempty"`
@@ -26,18 +27,42 @@ type Schema struct {
 
 type Models map[string]*Schema
 
+func (ms Models) GetSchema(ref string) *Schema {
+	return ms[ref]
+}
+
 func NewSchema(v interface{}) (*Schema, error) {
 	rv := reflect.ValueOf(v)
 	rt := indirectType(rv.Type())
 	if rt.Kind() != reflect.Struct {
 		return nil, fmt.Errorf("schema.NewSchemas: v must be struct or pointer of struct")
 	} else {
-		schema, err := valueToSchema(rv, nil)
+		schema, err := valueToSchema(rv, nil, make(map[reflect.Type]struct{}))
 		if err != nil {
 			return nil, err
 		}
 		return schema, nil
 	}
+}
+
+func (s *Schema) Models() Models {
+	models := Models{}
+	if s.Model != "" {
+		models[s.Namespace+"."+s.Model] = s
+	}
+	for _, schema := range s.Properties {
+		subs := schema.Models()
+		for name, sub := range subs {
+			models[name] = sub
+		}
+	}
+	if s.Items != nil {
+		subs := s.Items.Models()
+		for name, sub := range subs {
+			models[name] = sub
+		}
+	}
+	return models
 }
 
 func (s *Schema) Valid(v interface{}) (info *Validations, err error) {
@@ -47,9 +72,9 @@ func (s *Schema) Valid(v interface{}) (info *Validations, err error) {
 func (s *Schema) valid(v reflect.Value) (info *Validations, err error) {
 	if s.Validations != nil && s.Type != Object {
 		v = reflect.Indirect(v)
-		if t := v.Type(); s.GoType != t {
-			return nil, fmt.Errorf("schema type: %s, got value type: %s", s.GoType, t)
-		}
+		//if t := v.Type(); s.GoType != t {
+		//	return nil, fmt.Errorf("schema type: %s, got value type: %s", s.GoType, t)
+		//}
 		valid := v.IsValid() && !v.IsZero()
 		if s.Validations.Required && !valid {
 			return &Validations{Required: true}, nil
@@ -365,8 +390,7 @@ func (s *Schema) withEnum(enum []interface{}) error {
 	s.initValidation()
 	var elements []interface{}
 	for _, e := range enum {
-		t := indirectType(s.GoType)
-		elem, err := types.ToValue(t.Kind(), e)
+		elem, err := types.ToValue(reflect.String, e)
 		if err != nil {
 			return err
 		}

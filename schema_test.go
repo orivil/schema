@@ -35,10 +35,10 @@ type C struct {
 	F14 schema.FileData   `json:"f14"`
 	F15 []schema.FileData `json:"f15"`
 	F16 *A                `json:"f16"`
+	F17 *B                `json:"f17"`
 }
 
 func TestNewSchemas(t *testing.T) {
-
 	s, err := schema.NewSchema(&A{})
 	if err != nil {
 		panic(err)
@@ -46,6 +46,8 @@ func TestNewSchemas(t *testing.T) {
 	got := jsonStr(s)
 	need :=
 		`{
+	"model": "A",
+	"namespace": "github.com/orivil/schema_test",
 	"type": "Object",
 	"properties": {
 		"f01": {
@@ -70,9 +72,9 @@ func TestNewSchemas(t *testing.T) {
 			"type": "Number",
 			"validations": {
 				"enum": [
-					1,
-					2,
-					3
+					"1",
+					"2",
+					"3"
 				]
 			}
 		},
@@ -119,6 +121,8 @@ func TestNewSchemas(t *testing.T) {
 			}
 		},
 		"f12": {
+			"model": "C",
+			"namespace": "github.com/orivil/schema_test",
 			"type": "Object",
 			"properties": {
 				"f13": {
@@ -137,7 +141,23 @@ func TestNewSchemas(t *testing.T) {
 					}
 				},
 				"f16": {
-					"$ref": "#"
+					"$ref": "github.com/orivil/schema_test.A"
+				},
+				"f17": {
+					"model": "B",
+					"namespace": "github.com/orivil/schema_test",
+					"type": "Object",
+					"properties": {
+						"f11": {
+							"type": "String",
+							"validations": {
+								"required": true
+							}
+						},
+						"f12": {
+							"$ref": "github.com/orivil/schema_test.C"
+						}
+					}
 				}
 			}
 		}

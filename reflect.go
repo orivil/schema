@@ -16,7 +16,7 @@ type Decoder interface {
 
 var decoderType = reflect.TypeOf(new(Decoder)).Elem()
 
-func valueToSchema(v reflect.Value, root *reflect.Type) (*Schema, error) {
+func valueToSchema(v reflect.Value, root *reflect.Type, existStructs map[reflect.Type]struct{}) (*Schema, error) {
 	if !v.IsValid() {
 		return nil, nil
 	}
@@ -24,13 +24,12 @@ func valueToSchema(v reflect.Value, root *reflect.Type) (*Schema, error) {
 		return v.Interface().(Decoder).Schema(), nil
 	}
 	v = indirectValue(v, true)
-	schema := &Schema{GoType: v.Type()}
 	t := v.Type()
-	schema.Type = GoToJSONType(t)
+	schema := &Schema{Type: GoToJSONType(t)}
 	k := t.Kind()
 	switch k {
 	case reflect.Interface:
-		return valueToSchema(v.Elem(), root)
+		return valueToSchema(v.Elem(), root, existStructs)
 	case reflect.Slice, reflect.Array:
 		if schema.Type != File {
 			ln := v.Len()
@@ -39,7 +38,7 @@ func valueToSchema(v reflect.Value, root *reflect.Type) (*Schema, error) {
 				err   error
 			)
 			if ln == 0 { // nil slice
-				items, err = valueToSchema(reflect.New(t.Elem()), root)
+				items, err = valueToSchema(reflect.New(t.Elem()), root, existStructs)
 			} else {
 				for i := 0; i < ln-1; i++ {
 					pre := indirectType(v.Index(i).Type())
@@ -48,7 +47,7 @@ func valueToSchema(v reflect.Value, root *reflect.Type) (*Schema, error) {
 						return nil, fmt.Errorf("slice or array element type must be unique, got %s, and %s", pre, next)
 					}
 				}
-				items, err = valueToSchema(v.Index(0), root)
+				items, err = valueToSchema(v.Index(0), root, existStructs)
 			}
 			if err != nil {
 				return nil, err
@@ -58,12 +57,12 @@ func valueToSchema(v reflect.Value, root *reflect.Type) (*Schema, error) {
 			}
 		}
 	case reflect.Struct:
-		if root != nil {
-			if *root == t {
-				return &Schema{Ref: "#"}, nil
-			}
+		if _, ok := existStructs[t]; ok {
+			return &Schema{Ref: t.PkgPath() + "." + t.Name()}, nil
 		} else {
-			root = &t
+			schema.Model = t.Name()
+			schema.Namespace = t.PkgPath()
+			existStructs[t] = struct{}{}
 		}
 		schema.Properties = Properties{}
 		fields := getStructFields(v)
@@ -71,7 +70,7 @@ func valueToSchema(v reflect.Value, root *reflect.Type) (*Schema, error) {
 			if ignore := isFieldIgnored(field.ft.Tag); ignore {
 				continue
 			}
-			fs, err := valueToSchema(field.fv, root)
+			fs, err := valueToSchema(field.fv, root, existStructs)
 			if err != nil {
 				return nil, err
 			}
@@ -88,7 +87,7 @@ func valueToSchema(v reflect.Value, root *reflect.Type) (*Schema, error) {
 		keys := v.MapKeys()
 		for _, key := range keys {
 			mv := v.MapIndex(key)
-			ms, err := valueToSchema(mv, root)
+			ms, err := valueToSchema(mv, root, existStructs)
 			if err != nil {
 				return nil, err
 			}
