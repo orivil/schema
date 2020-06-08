@@ -5,7 +5,6 @@
 package schema
 
 import (
-	"fmt"
 	"github.com/orivil/types"
 	"reflect"
 	"regexp"
@@ -33,16 +32,11 @@ func (ms Models) GetSchema(ref string) *Schema {
 
 func NewSchema(v interface{}) (*Schema, error) {
 	rv := reflect.ValueOf(v)
-	rt := indirectType(rv.Type())
-	if rt.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("schema.NewSchemas: v must be struct or pointer of struct")
-	} else {
-		schema, err := valueToSchema(rv, nil, make(map[reflect.Type]struct{}))
-		if err != nil {
-			return nil, err
-		}
-		return schema, nil
+	schema, err := valueToSchema(rv, nil, make(map[reflect.Type]struct{}))
+	if err != nil {
+		return nil, err
 	}
+	return schema, nil
 }
 
 func (s *Schema) Models() Models {

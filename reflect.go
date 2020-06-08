@@ -16,7 +16,7 @@ type Decoder interface {
 
 var decoderType = reflect.TypeOf(new(Decoder)).Elem()
 
-func valueToSchema(v reflect.Value, root *reflect.Type, existStructs map[reflect.Type]struct{}) (*Schema, error) {
+func valueToSchema(v reflect.Value, existStructs map[reflect.Type]struct{}) (*Schema, error) {
 	if !v.IsValid() {
 		return nil, nil
 	}
@@ -29,7 +29,7 @@ func valueToSchema(v reflect.Value, root *reflect.Type, existStructs map[reflect
 	k := t.Kind()
 	switch k {
 	case reflect.Interface:
-		return valueToSchema(v.Elem(), root, existStructs)
+		return valueToSchema(v.Elem(), existStructs)
 	case reflect.Slice, reflect.Array:
 		if schema.Type != File {
 			ln := v.Len()
@@ -38,7 +38,7 @@ func valueToSchema(v reflect.Value, root *reflect.Type, existStructs map[reflect
 				err   error
 			)
 			if ln == 0 { // nil slice
-				items, err = valueToSchema(reflect.New(t.Elem()), root, existStructs)
+				items, err = valueToSchema(reflect.New(t.Elem()), existStructs)
 			} else {
 				for i := 0; i < ln-1; i++ {
 					pre := indirectType(v.Index(i).Type())
@@ -47,7 +47,7 @@ func valueToSchema(v reflect.Value, root *reflect.Type, existStructs map[reflect
 						return nil, fmt.Errorf("slice or array element type must be unique, got %s, and %s", pre, next)
 					}
 				}
-				items, err = valueToSchema(v.Index(0), root, existStructs)
+				items, err = valueToSchema(v.Index(0), existStructs)
 			}
 			if err != nil {
 				return nil, err
@@ -70,7 +70,7 @@ func valueToSchema(v reflect.Value, root *reflect.Type, existStructs map[reflect
 			if ignore := isFieldIgnored(field.ft.Tag); ignore {
 				continue
 			}
-			fs, err := valueToSchema(field.fv, root, existStructs)
+			fs, err := valueToSchema(field.fv, existStructs)
 			if err != nil {
 				return nil, err
 			}
@@ -87,7 +87,7 @@ func valueToSchema(v reflect.Value, root *reflect.Type, existStructs map[reflect
 		keys := v.MapKeys()
 		for _, key := range keys {
 			mv := v.MapIndex(key)
-			ms, err := valueToSchema(mv, root, existStructs)
+			ms, err := valueToSchema(mv, existStructs)
 			if err != nil {
 				return nil, err
 			}
