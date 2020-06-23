@@ -10,6 +10,7 @@ import (
 )
 
 type Validations struct {
+	Field     string   `json:"field,omitempty"`
 	Required  bool     `json:"required,omitempty"`
 	Pattern   string   `json:"pattern,omitempty"`
 	MaxItems  *int     `json:"maxItems,omitempty"`

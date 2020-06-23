@@ -32,43 +32,25 @@ func (ms Models) GetSchema(ref string) *Schema {
 
 func NewSchema(v interface{}) (*Schema, error) {
 	rv := reflect.ValueOf(v)
-	schema, err := valueToSchema(rv, nil, make(map[reflect.Type]struct{}))
+	schema, err := valueToSchema(rv, make(map[reflect.Type]struct{}))
 	if err != nil {
 		return nil, err
 	}
 	return schema, nil
 }
 
-func (s *Schema) Models() Models {
-	models := Models{}
-	if s.Model != "" {
-		models[s.Namespace+"."+s.Model] = s
-	}
-	for _, schema := range s.Properties {
-		subs := schema.Models()
-		for name, sub := range subs {
-			models[name] = sub
-		}
-	}
-	if s.Items != nil {
-		subs := s.Items.Models()
-		for name, sub := range subs {
-			models[name] = sub
-		}
-	}
-	return models
-}
-
 func (s *Schema) Valid(v interface{}) (info *Validations, err error) {
-	return s.valid(reflect.ValueOf(v))
+	return s.valid("", reflect.ValueOf(v))
 }
 
-func (s *Schema) valid(v reflect.Value) (info *Validations, err error) {
+func (s *Schema) valid(field string, v reflect.Value) (info *Validations, err error) {
+	defer func() {
+		if info != nil && field != "" {
+			info.Field = field
+		}
+	}()
 	if s.Validations != nil && s.Type != Object {
 		v = reflect.Indirect(v)
-		//if t := v.Type(); s.GoType != t {
-		//	return nil, fmt.Errorf("schema type: %s, got value type: %s", s.GoType, t)
-		//}
 		valid := v.IsValid() && !v.IsZero()
 		if s.Validations.Required && !valid {
 			return &Validations{Required: true}, nil
@@ -99,9 +81,20 @@ func (s *Schema) valid(v reflect.Value) (info *Validations, err error) {
 					}
 				}
 			case Array:
-				info = s.Validations.validItemsLength(v.Len())
+				var ln = v.Len()
+				info = s.Validations.validItemsLength(ln)
 				if info != nil {
 					return info, nil
+				}
+				for i := 0; i < ln; i++ {
+					var item = v.Index(i)
+					info, err = s.Items.valid(field, item)
+					if err != nil {
+						return nil, err
+					}
+					if info != nil {
+						return info, nil
+					}
 				}
 			}
 		}
@@ -117,15 +110,15 @@ func (s *Schema) valid(v reflect.Value) (info *Validations, err error) {
 			}
 			for _, schema := range s.Properties {
 				fv := fvs[schema.Name]
-				info, err = schema.valid(fv)
+				info, err = schema.valid(initFieldName(field, schema.Name), fv)
 				if info != nil || err != nil {
 					return info, err
 				}
 			}
 		} else if vk == reflect.Map {
-			for property, schema := range s.Properties {
-				fv := v.MapIndex(reflect.ValueOf(property))
-				info, err = schema.valid(fv)
+			for _, schema := range s.Properties {
+				fv := v.MapIndex(reflect.ValueOf(schema.Name))
+				info, err = schema.valid(initFieldName(field, schema.Name), fv)
 				if info != nil || err != nil {
 					return info, err
 				}
@@ -133,6 +126,14 @@ func (s *Schema) valid(v reflect.Value) (info *Validations, err error) {
 		}
 	}
 	return nil, nil
+}
+
+func initFieldName(parent, field string) string {
+	if parent != "" {
+		return parent + "." + field
+	} else {
+		return field
+	}
 }
 
 func (s *Schema) initValidation() {
