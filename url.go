@@ -17,8 +17,14 @@ type UrlUnmarshaler interface {
 
 var urlUnmarshalerType = reflect.TypeOf(new(UrlUnmarshaler)).Elem()
 
+// UnmarshalUrl for un-marshaling values to v, v should be pointer to struct or it's reflect value
 func UnmarshalUrl(values url.Values, v interface{}) error {
-	rv := reflect.ValueOf(v)
+	var rv reflect.Value
+	if rev, ok := v.(reflect.Value); ok {
+		rv = rev
+	} else {
+		rv = reflect.ValueOf(v)
+	}
 	return unmarshalUrl(values, &rv)
 }
 
