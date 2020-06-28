@@ -25,7 +25,7 @@ func main() {
 	urlValues := url.Values{
 		"username": []string{"JayChou"},
 		"password": []string{"ChouJay"},
-		"sex": []string{"3"},
+		"sex":      []string{"3"},
 	}
 	ps := &params{}
 	err = UnmarshalUrl(urlValues, ps)
@@ -39,12 +39,12 @@ func main() {
 	fmt.Println("username:", ps.Username)
 	fmt.Println("password:", ps.Password)
 	fmt.Println("sex:", *ps.Sex)
-	fmt.Println("enum:", info.Enum)
+	fmt.Printf("field: %s, enum: %v", info.Field, info.Enum)
 
 	// Output:
 	// username: JayChou
 	// password: ChouJay
 	// sex: 3
-	// enum: [1 2]
+	// field: sex, enum: [1 2]
 }
 ```

@@ -29,23 +29,23 @@ func TestValidate(t *testing.T) {
 		info  *Validations
 	}
 	var testCases = []testCase{
-		{"str", `schema:"required"`, model{}, &Validations{Required: true}},
+		{"str", `schema:"required"`, model{}, &Validations{Field: "str", Required: true}},
 		{"str", `schema:"minLen:2"`, model{}, nil},
-		{"str", `schema:"minLen:2"`, model{Str: "1"}, &Validations{MinLen: newInt(2)}},
+		{"str", `schema:"minLen:2"`, model{Str: "1"}, &Validations{Field: "str", MinLen: newInt(2)}},
 		{"str", `schema:"maxLen:2"`, model{}, nil},
-		{"str", `schema:"maxLen:2"`, model{Str: "123"}, &Validations{MaxLen: newInt(2)}},
+		{"str", `schema:"maxLen:2"`, model{Str: "123"}, &Validations{Field: "str", MaxLen: newInt(2)}},
 		{"str", `schema:"pattern:^Jay"`, model{}, nil},
-		{"str", `schema:"pattern:^Jay"`, model{Str: "Chou Jay"}, &Validations{Pattern: "^Jay"}},
-		{"int", `schema:"required"`, model{}, &Validations{Required: true}},
+		{"str", `schema:"pattern:^Jay"`, model{Str: "Chou Jay"}, &Validations{Field: "str", Pattern: "^Jay"}},
+		{"int", `schema:"required"`, model{}, &Validations{Field: "int", Required: true}},
 		{"int", `schema:"minNum:2"`, model{}, nil},
-		{"int", `schema:"minNum:2"`, model{Int: 1}, &Validations{MinNum: newFloat(2)}},
-		{"int", `schema:"maxNum:2"`, model{Int: 3}, &Validations{MaxNum: newFloat(2)}},
-		{"int8", `schema:"required"`, model{}, &Validations{Required: true}},
-		{"s_str", `schema:"required"`, model{}, &Validations{Required: true}},
+		{"int", `schema:"minNum:2"`, model{Int: 1}, &Validations{Field: "int", MinNum: newFloat(2)}},
+		{"int", `schema:"maxNum:2"`, model{Int: 3}, &Validations{Field: "int", MaxNum: newFloat(2)}},
+		{"int8", `schema:"required"`, model{}, &Validations{Field: "int8", Required: true}},
+		{"s_str", `schema:"required"`, model{}, &Validations{Field: "s_str", Required: true}},
 		{"s_str", `schema:"minItems:2"`, model{Anonymous: &Anonymous{SStr: []string{"1", "2"}}}, nil},
 		{"s_str", `schema:"maxItems:2"`, model{Anonymous: &Anonymous{SStr: []string{"1", "2"}}}, nil},
-		{"s_str", `schema:"minItems:2;maxItems:3"`, model{Anonymous: &Anonymous{SStr: []string{"1", "2", "3", "4"}}}, &Validations{MinItems: newInt(2), MaxItems: newInt(3)}},
-		{"s_int", `schema:"required"`, model{}, &Validations{Required: true}},
+		{"s_str", `schema:"minItems:2;maxItems:3"`, model{Anonymous: &Anonymous{SStr: []string{"1", "2", "3", "4"}}}, &Validations{Field: "s_str", MinItems: newInt(2), MaxItems: newInt(3)}},
+		{"s_int", `schema:"required"`, model{}, &Validations{Field: "s_int", Required: true}},
 	}
 	for _, tc := range testCases {
 		schema, err := NewSchema(&model{})
@@ -65,7 +65,7 @@ func TestValidate(t *testing.T) {
 			got := jsonStr(info)
 			need := jsonStr(tc.info)
 			if got != need {
-				t.Errorf("field: %s, need: %s, got: %s\n", tc.field, need, got)
+				t.Errorf("need: %s, got: %s\n", need, got)
 			}
 		}
 	}

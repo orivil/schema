@@ -57,10 +57,6 @@ func BenchmarkUnmarshalUrlValues(b *testing.B) {
 		Str string `json:"str"`
 		Int *int   `json:"int"`
 	}
-	//s, err := schema.NewSchema(&Params{})
-	//if err != nil {
-	//	b.Fatal(err)
-	//}
 	values := url.Values{
 		"str": []string{"Nina"},
 		"int": []string{"64"},
